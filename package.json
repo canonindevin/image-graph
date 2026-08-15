@@ -1,0 +1,15 @@
+{
+  "name": "image-graph",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Grid any photo, zoom into a single square, and superimpose the image on your paper with a live camera overlay.",
+  "type": "module",
+  "scripts": {
+    "start": "node server.js",
+    "start:https": "node server.js --https",
+    "test": "node --test \"test/*.test.js\""
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}

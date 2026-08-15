@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1, user-scalable=no" />
+<meta name="theme-color" content="#0e1116" />
+<meta name="description" content="Grid any photo, zoom into a single square, and superimpose the image on your paper with the camera overlay." />
+<title>Image Graph — grid, zoom &amp; camera overlay for painters</title>
+<link rel="manifest" href="manifest.webmanifest" />
+<link rel="icon" href="icon.svg" type="image/svg+xml" />
+<link rel="apple-touch-icon" href="icon.svg" />
+<link rel="stylesheet" href="styles.css" />
+</head>
+<body data-mode="grid" data-tool="pan">
+
+<header class="appbar">
+  <button id="panelToggle" class="icon-btn" aria-label="Toggle controls" aria-expanded="false" title="Controls">☰</button>
+  <h1 class="brand">Image<span>Graph</span></h1>
+
+  <div class="modes" role="group" aria-label="Mode">
+    <button id="modeGrid" class="seg is-active" data-mode="grid">Grid</button>
+    <button id="modeOverlay" class="seg" data-mode="overlay">Overlay</button>
+  </div>
+
+  <div class="spacer"></div>
+
+  <label class="btn" for="filePick">Open photo</label>
+  <input id="filePick" class="visually-hidden" type="file" accept="image/*" />
+  <label class="btn ghost only-wide" for="cameraPick">Take photo</label>
+  <input id="cameraPick" class="visually-hidden" type="file" accept="image/*" capture="environment" />
+</header>
+
+<div class="body">
+  <aside id="panel" class="panel" aria-label="Controls">
+
+    <section class="group" data-only="grid">
+      <h2>Grid</h2>
+      <div class="row two">
+        <label class="field">
+          <span>Rows</span>
+          <input id="rows" type="number" min="1" max="500" step="1" value="4" inputmode="numeric" />
+        </label>
+        <label class="field">
+          <span>Columns</span>
+          <input id="cols" type="number" min="1" max="500" step="1" value="4" inputmode="numeric" />
+        </label>
+      </div>
+      <div class="row presets" id="presets">
+        <button class="chip" data-preset="2x2">2×2</button>
+        <button class="chip" data-preset="3x3">3×3</button>
+        <button class="chip" data-preset="4x4">4×4</button>
+        <button class="chip" data-preset="5x2">5×2</button>
+        <button class="chip" data-preset="8x8">8×8</button>
+        <button class="chip" data-preset="16x16">16×16</button>
+        <button class="chip" data-preset="100x100">100×100</button>
+      </div>
+      <div class="row">
+        <button id="squareCells" class="btn ghost wide" title="Adjust columns so each cell is square">Make cells square</button>
+      </div>
+      <label class="field">
+        <span>Line width <b id="lineWidthVal">1.5</b> px</span>
+        <input id="lineWidth" type="range" min="0.5" max="8" step="0.5" value="1.5" />
+      </label>
+      <label class="field">
+        <span>Grid opacity <b id="gridOpacityVal">85</b>%</span>
+        <input id="gridOpacity" type="range" min="5" max="100" step="1" value="85" />
+      </label>
+      <div class="row two">
+        <label class="field">
+          <span>Line color</span>
+          <input id="gridColor" type="color" value="#ff3b6b" />
+        </label>
+        <label class="field">
+          <span>Labels</span>
+          <select id="labelStyle">
+            <option value="alpha">A1, B1…</option>
+            <option value="numeric">1-1, 2-1…</option>
+            <option value="none">Off</option>
+          </select>
+        </label>
+      </div>
+      <div class="row two">
+        <label class="check"><input id="showGrid" type="checkbox" checked /><span>Show grid</span></label>
+        <label class="check"><input id="dimOutside" type="checkbox" /><span>Dim outside selection</span></label>
+      </div>
+    </section>
+
+    <section class="group" data-only="grid">
+      <h2>Selection &amp; zoom</h2>
+      <p class="readout"><b id="selReadout">No square selected</b></p>
+      <div class="row">
+        <button id="zoomSel" class="btn wide">Zoom to selection</button>
+      </div>
+      <div class="row four">
+        <button class="btn ghost" id="selUp" title="Up">↑</button>
+        <button class="btn ghost" id="selDown" title="Down">↓</button>
+        <button class="btn ghost" id="selLeft" title="Left">←</button>
+        <button class="btn ghost" id="selRight" title="Right">→</button>
+      </div>
+      <div class="row two">
+        <button id="clearSel" class="btn ghost">Clear</button>
+        <button id="saveCell" class="btn ghost">Save square</button>
+      </div>
+      <p class="hint">Tap a square to select it. Drag in <b>Select</b> mode to pick a region of squares. Double-tap zooms straight in.</p>
+    </section>
+
+    <section class="group" data-only="overlay">
+      <h2>Camera overlay</h2>
+      <div class="row two">
+        <button id="camStart" class="btn wide">Start camera</button>
+        <button id="camSwitch" class="btn ghost">Flip camera</button>
+      </div>
+      <label class="field">
+        <span>Photo opacity <b id="imgOpacityVal">45</b>%</span>
+        <input id="imgOpacity" type="range" min="0" max="100" step="1" value="45" />
+      </label>
+      <label class="field">
+        <span>Grid opacity <b id="ovGridOpacityVal">90</b>%</span>
+        <input id="ovGridOpacity" type="range" min="0" max="100" step="1" value="90" />
+      </label>
+      <div class="row two">
+        <label class="check"><input id="ovShowPhoto" type="checkbox" checked /><span>Show photo</span></label>
+        <label class="check"><input id="ovShowGrid" type="checkbox" checked /><span>Show grid</span></label>
+      </div>
+      <div class="row two">
+        <label class="check"><input id="ovSelectionOnly" type="checkbox" /><span>Selected squares only</span></label>
+        <label class="check"><input id="ovLock" type="checkbox" /><span>Lock alignment</span></label>
+      </div>
+      <div class="row two">
+        <button id="ovFit" class="btn ghost">Fit to screen</button>
+        <button id="ovFreeze" class="btn ghost">Freeze frame</button>
+      </div>
+      <p class="hint">Point the camera at your paper, then drag / pinch / twist to line the photo up with what you have drawn. Two fingers rotate as well as zoom.</p>
+    </section>
+
+    <section class="group">
+      <h2>Export</h2>
+      <div class="row two">
+        <button id="savePng" class="btn ghost">Save gridded photo</button>
+        <button id="saveShot" class="btn ghost">Save screenshot</button>
+      </div>
+    </section>
+
+    <section class="group">
+      <h2>Shortcuts</h2>
+      <ul class="keys">
+        <li><kbd>Arrows</kbd> move selection · <kbd>Shift</kbd>+<kbd>Arrows</kbd> grow it</li>
+        <li><kbd>Enter</kbd> zoom to selection · <kbd>Esc</kbd> clear</li>
+        <li><kbd>+</kbd>/<kbd>−</kbd> zoom · <kbd>0</kbd> fit · <kbd>1</kbd> actual size</li>
+        <li><kbd>G</kbd> grid on/off · <kbd>S</kbd> pan/select · <kbd>O</kbd> overlay</li>
+      </ul>
+    </section>
+  </aside>
+
+  <main class="stage" id="stage">
+    <video id="video" playsinline muted autoplay></video>
+    <canvas id="canvas"></canvas>
+
+    <div id="empty" class="empty">
+      <div class="empty-card">
+        <h2>Grid a photo, then paint square by square</h2>
+        <ol>
+          <li>Open a photo (or take one).</li>
+          <li>Choose any rows × columns — 2×2, 5×2, 100×100.</li>
+          <li>Tap a square and zoom right into it.</li>
+          <li>Switch to <b>Overlay</b> to see the photo through your camera, on your paper.</li>
+        </ol>
+        <label class="btn big" for="filePick">Open a photo</label>
+      </div>
+    </div>
+
+    <div class="hud">
+      <span id="hudCell" class="pill">—</span>
+      <span id="hudZoom" class="pill">100%</span>
+    </div>
+
+    <div class="toolbar">
+      <div class="seg-group" role="group" aria-label="Tool">
+        <button id="toolPan" class="seg is-active">Pan</button>
+        <button id="toolSelect" class="seg">Select</button>
+      </div>
+      <button id="zoomOut" class="round" title="Zoom out">−</button>
+      <button id="zoomIn" class="round" title="Zoom in">+</button>
+      <button id="fit" class="round wide-round" title="Fit to screen">Fit</button>
+      <button id="prevCell" class="round" title="Previous square">‹</button>
+      <button id="nextCell" class="round" title="Next square">›</button>
+    </div>
+  </main>
+</div>
+
+<div id="toast" class="toast" role="status" aria-live="polite"></div>
+
+<script type="module" src="js/app.js"></script>
+</body>
+</html>
