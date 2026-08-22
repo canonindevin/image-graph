@@ -12,6 +12,10 @@ photo never leaves the device.
 **Grid mode**
 
 - Open a photo from a file, the camera, a drag-and-drop, or a paste.
+  On a Mac, images inside the Photos app are not ordinary files, so no web
+  page can browse them — drag one out of Photos onto the window, or copy it
+  there and paste it here. HEIC photos need Safari; dragging out of Photos
+  converts them on the way.
 - Impose any grid you like: `2×2`, `5×2`, `100×100` — rows and columns are set
   independently, from 1 to 500 each, with one-tap presets and a
   **Make cells square** helper that matches the columns to the photo's aspect.

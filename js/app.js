@@ -426,13 +426,13 @@ async function decode(blob) {
   }
 }
 
+/** Returns false if the blob could not be decoded; the caller reports why. */
 async function setPhoto(blob, name, { restoreView = null } = {}) {
   let bitmap;
   try {
     bitmap = await decode(blob);
   } catch {
-    toast('That file could not be read as an image');
-    return;
+    return false;
   }
   if (image?.close) image.close();
   image = bitmap;
@@ -450,15 +450,27 @@ async function setPhoto(blob, name, { restoreView = null } = {}) {
   }
   persist();
   scheduleRender();
+  return true;
 }
+
+// Apple's default camera format. Safari decodes it; Chrome and Firefox do not.
+const HEIC = /(^|\.)hei[cf]$/i;
+const isHeic = (file) => HEIC.test(file.name?.split('.').pop() || '') || /hei[cf]/i.test(file.type || '');
 
 async function openFile(file) {
   if (!file) return;
-  if (!file.type.startsWith('image/')) {
+  if (!file.type.startsWith('image/') && !isHeic(file)) {
     toast('Please choose an image file');
     return;
   }
-  await setPhoto(file, file.name);
+  if (!(await setPhoto(file, file.name))) {
+    toast(
+      isHeic(file)
+        ? 'This browser cannot read Apple HEIC photos. Open it in Safari, or drag the photo out of the Photos app instead — macOS converts it on the way.'
+        : 'That file could not be read as an image',
+    );
+    return;
+  }
   const stored = await savePhoto(file, file.name);
   toast(stored ? 'Photo loaded — it will still be here next time' : 'Photo loaded');
 }
@@ -661,12 +673,26 @@ el.cameraPick.addEventListener('change', (e) => {
   e.target.value = '';
 });
 
+// Dragging a photo out of the macOS Photos app lands here: it is the simplest
+// route to a photo that has no ordinary file on disk.
+let dragDepth = 0;
+el.stage.addEventListener('dragenter', () => {
+  if (++dragDepth === 1) el.stage.classList.add('is-dropping');
+});
+el.stage.addEventListener('dragleave', () => {
+  if (--dragDepth <= 0) {
+    dragDepth = 0;
+    el.stage.classList.remove('is-dropping');
+  }
+});
 el.stage.addEventListener('dragover', (e) => {
   e.preventDefault();
   e.dataTransfer.dropEffect = 'copy';
 });
 el.stage.addEventListener('drop', (e) => {
   e.preventDefault();
+  dragDepth = 0;
+  el.stage.classList.remove('is-dropping');
   const file = e.dataTransfer?.files?.[0];
   if (file) openFile(file);
 });
@@ -929,8 +955,7 @@ async function boot() {
   }
 
   const stored = await loadPhoto();
-  if (stored) {
-    await setPhoto(stored.blob, stored.name, { restoreView: savedViews });
+  if (stored && (await setPhoto(stored.blob, stored.name, { restoreView: savedViews }))) {
     if (state.selection) setSelection(state.selection, { persistNow: false });
   } else {
     el.empty.hidden = false;

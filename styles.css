@@ -340,6 +340,31 @@ body[data-mode="overlay"] .stage { background: #000; }
 .empty-card ol { margin: 0; padding-left: 18px; color: var(--fg-dim); }
 .empty-card li { margin-bottom: 5px; }
 
+.empty-card .empty-alt {
+  margin: 14px 0 0;
+  padding-top: 12px;
+  border-top: 1px solid var(--line);
+  color: var(--fg-dim);
+  font-size: 12.5px;
+}
+.empty-card .empty-alt b { color: var(--fg); font-weight: 600; }
+
+/* Dropping a file anywhere on the stage works: say so while it is over us. */
+.stage.is-dropping::after {
+  content: "Drop the photo here";
+  position: absolute;
+  inset: 10px;
+  z-index: 20;
+  display: grid;
+  place-items: center;
+  border: 2px dashed var(--accent);
+  border-radius: 14px;
+  background: rgba(76, 194, 255, .1);
+  color: var(--fg);
+  font-weight: 600;
+  pointer-events: none;
+}
+
 .toast {
   position: fixed;
   left: 50%;
